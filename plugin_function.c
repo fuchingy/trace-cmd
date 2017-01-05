@@ -164,11 +164,18 @@ static int function_handler(struct trace_seq *s, struct pevent_record *record,
 
 int PEVENT_PLUGIN_LOADER(struct pevent *pevent)
 {
-	pevent_register_event_handler(pevent, -1, "ftrace", "function",
+	/*
+	 * TBD: Due to unknown reason, the python plugin for 
+	 * ftrace:function is enabled only if the following
+	 * are commented. This is obviously a bad approach,
+	 * and should be solved in the future. So far, since
+	 * the python plugin works, I'll leave it here.
+	 */
+/*	pevent_register_event_handler(pevent, -1, "ftrace", "function",
 				      function_handler, NULL);
 
 	trace_util_add_options("ftrace", plugin_options);
-
+*/
 	return 0;
 }
 
