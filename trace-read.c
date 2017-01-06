@@ -90,6 +90,7 @@ static unsigned int page_size;
 static int input_fd;
 static const char *default_input_file = "trace.dat";
 static const char *input_file;
+static const char *csv_file;
 static int multi_inputs;
 static int max_file_size;
 
@@ -1480,7 +1481,7 @@ void trace_report (int argc, char **argv)
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long (argc-1, argv+1, "+hSIi:H:feGpRr:tPNn:LlEwF:VvTqO:",
+		c = getopt_long (argc-1, argv+1, "+hSIi:c:H:feGpRr:tPNn:LlEwF:VvTqO:",
 			long_options, &option_index);
 		if (c == -1)
 			break;
@@ -1499,6 +1500,9 @@ void trace_report (int argc, char **argv)
 				add_input(optarg);
 			} else
 				input_file = optarg;
+			break;
+		case 'c':
+			csv_file = optarg;
 			break;
 		case 'F':
 			add_filter(optarg, neg);
@@ -1656,6 +1660,14 @@ void trace_report (int argc, char **argv)
 	if (!input_file)
 		input_file = default_input_file;
 
+	if (csv_file) {
+		csv_en = 1;
+		csv_fp = fopen(csv_file, "w");
+		if (!csv_fp)
+			die("writing to '%s'", csv_fp);
+	} else
+		csv_en = 0;
+
 	if (!multi_inputs) {
 		add_input(input_file);
 		if (tsoffset)
@@ -1780,6 +1792,8 @@ void trace_report (int argc, char **argv)
 	free_inputs();
 
 	finish_wakeup();
+	if(csv_en)
+		fclose(csv_fp);
 
 	return;
 }

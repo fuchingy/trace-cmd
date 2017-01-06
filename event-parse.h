@@ -30,6 +30,9 @@
 #define __maybe_unused __attribute__((unused))
 #endif
 
+/* ----------------------- csv ----------------------- */
+FILE *csv_fp;
+int csv_en;
 /* ----------------------- trace_seq ----------------------- */
 
 

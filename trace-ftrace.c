@@ -291,6 +291,116 @@ static int print_graph_nested(struct trace_seq *s,
 }
 
 static int
+fgraph_ent_csv_write(struct trace_seq *s, struct pevent_record *record,
+		   struct event_format *event, void *context)
+{
+	struct pevent *pevent = event->pevent;
+	struct tracecmd_ftrace *finfo = context;
+	struct pevent_record *rec;
+	unsigned long long val, pid;
+	unsigned long long depth;
+	int cpu;
+	const char *func;
+	unsigned long long rettime, calltime;
+
+	ret_event_check(finfo, event->pevent);
+
+	if (!pevent_get_common_field_val(s, event, "common_pid", record, &pid, 1))
+		fprintf(csv_fp, "%llu,", pid);
+	else
+		fprintf(csv_fp, "NA,");
+
+	if (!pevent_get_field_val(s, event, "depth", record, &depth, 1))
+		fprintf(csv_fp, "%llu,", depth);
+	else
+		fprintf(csv_fp, "NA,");
+
+	rec = tracecmd_peek_next_data(tracecmd_curr_thread_handle, &cpu);
+	if (rec)
+		rec = get_return_for_leaf(s, cpu, pid, val, rec, finfo);
+	if (rec) {
+		/*
+		 * If this is a leaf function, then get_return_for_leaf
+		 * returns the return of the function
+		 */
+		if (!pevent_get_field_val(s, finfo->fgraph_ret_event, "calltime", rec, &calltime, 1))
+			fprintf(csv_fp, "%llu,", calltime);
+		else
+			fprintf(csv_fp, "NA,");
+		if (!pevent_get_field_val(s, finfo->fgraph_ret_event, "rettime", rec, &rettime, 1))
+			fprintf(csv_fp, "%llu,", rettime);
+		else
+			fprintf(csv_fp, "NA,");
+			free_record(rec);
+	} else
+		fprintf(csv_fp, "NA,NA,");
+
+	fprintf(csv_fp, "NA,");
+
+	if (!pevent_get_field_val(s, event, "func", record, &val, 1)) {
+		func = pevent_find_function(pevent, val);
+		if (func)
+			fprintf(csv_fp, "%s", func);
+		else
+			fprintf(csv_fp, "%llx", val);
+	} else
+		fprintf(csv_fp, "NA");
+	fprintf(csv_fp, "\n");
+
+	return 0;
+}
+
+static int
+fgraph_ret_csv_write(struct trace_seq *s, struct pevent_record *record,
+		   struct event_format *event, void *context)
+{
+	struct pevent *pevent = event->pevent;
+	struct tracecmd_ftrace *finfo = context;
+	unsigned long long rettime, calltime;
+	unsigned long long duration, depth;
+	unsigned long long val, pid;
+	const char *func;
+
+	ret_event_check(finfo, event->pevent);
+
+	if (!pevent_get_common_field_val(s, event, "common_pid", record, &pid, 1))
+		fprintf(csv_fp, "%llu,", pid);
+	else
+		fprintf(csv_fp, "NA,");
+
+	if (!pevent_get_field_val(s, event, "depth", record, &depth, 1))
+		fprintf(csv_fp, "%llu,", depth);
+	else
+		fprintf(csv_fp, "NA,");
+
+	if (!pevent_get_field_val(s, event, "calltime", record, &calltime, 1))
+		fprintf(csv_fp, "%llu,", calltime);
+	else
+		fprintf(csv_fp, "NA,");
+
+	if (!pevent_get_field_val(s, event, "rettime", record, &rettime, 1))
+		fprintf(csv_fp, "%llu,", rettime);
+	else
+		fprintf(csv_fp, "NA,");
+
+	duration = rettime - calltime;
+	fprintf(csv_fp, "%llu,", duration);
+
+	if (!pevent_get_field_val(s, event, "func", record, &val, 1)) {
+		func = pevent_find_function(pevent, val);
+		if (func)
+			fprintf(csv_fp, "%s", func);
+		else
+			fprintf(csv_fp, "%llx", val);
+	} else
+		fprintf(csv_fp, "NA");
+
+	fprintf(csv_fp, "\n");
+
+	return 0;
+}
+
+static int
 fgraph_ent_handler(struct trace_seq *s, struct pevent_record *record,
 		   struct event_format *event, void *context)
 {
@@ -298,6 +408,9 @@ fgraph_ent_handler(struct trace_seq *s, struct pevent_record *record,
 	struct pevent_record *rec;
 	unsigned long long val, pid;
 	int cpu;
+
+	if(csv_en)
+		fgraph_ent_csv_write(s, record, event, context);
 
 	ret_event_check(finfo, event->pevent);
 
@@ -334,6 +447,9 @@ fgraph_ret_handler(struct trace_seq *s, struct pevent_record *record,
 	unsigned long long val;
 	const char *func;
 	int i;
+
+	if(csv_en)
+		fgraph_ret_csv_write(s, record, event, context);
 
 	ret_event_check(finfo, event->pevent);
 

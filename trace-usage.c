@@ -130,11 +130,12 @@ static struct usage_help usage_help[] = {
 	{
 		"report",
 		"read out the trace stored in a trace.dat file",
-		" %s report [-i file] [--cpu cpu] [-e][-f][-l][-P][-L][-N][-R][-E]\\\n"
+		" %s report [-i file] [-c csv_file] [--cpu cpu] [-e][-f][-l][-P][-L][-N][-R][-E]\\\n"
 		"           [-r events][-n events][-F filter][-v][-V][-T][-O option]\n"
 		"           [-H [start_system:]start_event,start_match[,pid]/[end_system:]end_event,end_match[,flags]\n"
 		"           [-G]\n"
 		"          -i input file [default trace.dat]\n"
+		"          -c output csv file\n"
 		"          -e show file endianess\n"
 		"          -f show function list\n"
 		"          -P show printk list\n"

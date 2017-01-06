@@ -5422,6 +5422,8 @@ void pevent_print_event_task(struct pevent *pevent, struct trace_seq *s,
 		       comm, pid, record->cpu);
 	} else
 		trace_seq_printf(s, "%16s-%-5d [%03d]", comm, pid, record->cpu);
+	if(csv_en)
+		fprintf(csv_fp, "%s,%d,%d,", comm, pid, record->cpu);
 }
 
 /**
@@ -5473,6 +5475,8 @@ void pevent_print_event_time(struct pevent *pevent, struct trace_seq *s,
 		trace_seq_printf(s, " %5lu.%0*lu:", secs, p, usecs);
 	} else
 		trace_seq_printf(s, " %12llu:", record->ts);
+	if(csv_en)
+		fprintf(csv_fp, "%llu,", record->ts);
 }
 
 /**
@@ -5492,6 +5496,8 @@ void pevent_print_event_data(struct pevent *pevent, struct trace_seq *s,
 	int len;
 
 	trace_seq_printf(s, " %s: ", event->name);
+	if(csv_en)
+		fprintf(csv_fp, "%s,", event->name);
 
 	/* Space out the event names evenly. */
 	len = strlen(event->name);
