@@ -76,6 +76,36 @@ static int find_ret_event(struct tracecmd_ftrace *finfo, struct pevent *pevent)
 			return -1;					\
 	} while (0)
 
+static int function_csv_handler(struct trace_seq *s, struct pevent_record *record,
+			    struct event_format *event, void *context)
+{
+	struct pevent *pevent = event->pevent;
+	unsigned long long function;
+	const char *func;
+
+	if( !pevent_get_field_val(s, event, "ip", record, &function, 1)) {
+
+		func = pevent_find_function(pevent, function);
+		if (func)
+			fprintf(csv_fp, "%s,", func);
+		else
+			fprintf(csv_fp, "%llx,", function);
+	} else
+		fprintf(csv_fp, "NA,");
+
+	if (!pevent_get_field_val(s, event, "parent_ip", record, &function, 1)) {
+
+		func = pevent_find_function(pevent, function);
+		if (func)
+			fprintf(csv_fp, "%s\n", func);
+		else
+			fprintf(csv_fp, "%llx\n", function);
+	} else
+		fprintf(csv_fp, "NA\n");
+
+	return 0;
+}
+
 static int function_handler(struct trace_seq *s, struct pevent_record *record,
 			    struct event_format *event, void *context)
 {
@@ -545,16 +575,20 @@ int tracecmd_ftrace_overrides(struct tracecmd_input *handle,
 
 	pevent = tracecmd_get_pevent(handle);
 
-	pevent_register_event_handler(pevent, -1, "ftrace", "function",
-				      function_handler, NULL);
 
 	if( csv_en ) {	
+		pevent_register_event_handler(pevent, -1, "ftrace", "function",
+					      function_csv_handler, NULL);
+
 		pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_entry",
 					      fgraph_ent_csv_handler, finfo);
 
 		pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_exit",
 					      fgraph_ret_csv_handler, finfo);
 	} else {
+		pevent_register_event_handler(pevent, -1, "ftrace", "function",
+					      function_handler, NULL);
+
 		pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_entry",
 					      fgraph_ent_handler, finfo);
 
