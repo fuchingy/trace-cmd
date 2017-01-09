@@ -291,7 +291,7 @@ static int print_graph_nested(struct trace_seq *s,
 }
 
 static int
-fgraph_ent_csv_write(struct trace_seq *s, struct pevent_record *record,
+fgraph_ent_csv_handler(struct trace_seq *s, struct pevent_record *record,
 		   struct event_format *event, void *context)
 {
 	struct pevent *pevent = event->pevent;
@@ -351,7 +351,7 @@ fgraph_ent_csv_write(struct trace_seq *s, struct pevent_record *record,
 }
 
 static int
-fgraph_ret_csv_write(struct trace_seq *s, struct pevent_record *record,
+fgraph_ret_csv_handler(struct trace_seq *s, struct pevent_record *record,
 		   struct event_format *event, void *context)
 {
 	struct pevent *pevent = event->pevent;
@@ -409,9 +409,6 @@ fgraph_ent_handler(struct trace_seq *s, struct pevent_record *record,
 	unsigned long long val, pid;
 	int cpu;
 
-	if(csv_en)
-		fgraph_ent_csv_write(s, record, event, context);
-
 	ret_event_check(finfo, event->pevent);
 
 	if (pevent_get_common_field_val(s, event, "common_pid", record, &pid, 1))
@@ -447,9 +444,6 @@ fgraph_ret_handler(struct trace_seq *s, struct pevent_record *record,
 	unsigned long long val;
 	const char *func;
 	int i;
-
-	if(csv_en)
-		fgraph_ret_csv_write(s, record, event, context);
 
 	ret_event_check(finfo, event->pevent);
 
@@ -554,11 +548,19 @@ int tracecmd_ftrace_overrides(struct tracecmd_input *handle,
 	pevent_register_event_handler(pevent, -1, "ftrace", "function",
 				      function_handler, NULL);
 
-	pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_entry",
-				      fgraph_ent_handler, finfo);
+	if( csv_en ) {	
+		pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_entry",
+					      fgraph_ent_csv_handler, finfo);
 
-	pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_exit",
-				      fgraph_ret_handler, finfo);
+		pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_exit",
+					      fgraph_ret_csv_handler, finfo);
+	} else {
+		pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_entry",
+					      fgraph_ent_handler, finfo);
+
+		pevent_register_event_handler(pevent, -1, "ftrace", "funcgraph_exit",
+					      fgraph_ret_handler, finfo);
+	}
 
 	pevent_register_event_handler(pevent, -1, "ftrace", "kernel_stack",
 				      trace_stack_handler, finfo);
