@@ -5473,7 +5473,7 @@ void pevent_print_event_time(struct pevent *pevent, struct trace_seq *s,
 		nsecs = record->ts - secs * NSECS_PER_SEC;
 	}
 
-	if (pevent->latency_format) {
+	if (pevent->latency_format || csv_en) {
 		pevent_data_lat_fmt(pevent, s, record);
 	}
 
