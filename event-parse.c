@@ -5142,10 +5142,29 @@ void pevent_data_lat_fmt(struct pevent *pevent,
 	       (hardirq && softirq) ? 'H' :
 	       hardirq ? 'h' : softirq ? 's' : '.');
 
+	if(csv_en) {
+		fprintf(csv_fp, "%s,",
+		        (lat_flags & TRACE_FLAG_IRQS_OFF) ? "irqs-off" :
+		        (lat_flags & TRACE_FLAG_IRQS_NOSUPPORT) ?
+		        "NA" : "");
+		fprintf(csv_fp, "%s,",
+		        (lat_flags & TRACE_FLAG_NEED_RESCHED) ? "need_resched" : "");
+		fprintf(csv_fp, "%s,",
+		        (hardirq && softirq) ? "hsirq" :
+		        hardirq ? "hirq" : softirq ? "sirq" : "");
+	}
+
 	if (pc)
 		trace_seq_printf(s, "%x", pc);
 	else
 		trace_seq_putc(s, '.');
+
+	if(csv_en) {
+		if (pc)
+			fprintf(csv_fp, "%x,", pc);
+		else
+			fprintf(csv_fp, ",");
+	}
 
 	if (migrate_disable_exists) {
 		if (migrate_disable < 0)
